@@ -7,7 +7,7 @@ module AnonymousProxymaster
     # ----------------------------------------------------------------------------
 
     def initialize
-      @logger = Logger.new("#{RAILS_ROOT}/log/anonymous_proxymaster.log", "daily")
+      @logger = Logger.new("#{::Rails.root.to_s}/log/anonymous_proxymaster.log", "daily")
       @logger.formatter = Logger::Formatter.new
 
       @proxy_servers = []
@@ -22,8 +22,8 @@ module AnonymousProxymaster
     def get_proxy_list
       @proxy_servers = []
 
-      # 25 is total page number
-      (1..25).each do |p|
+      # 30 is total page number
+      (1..30).each do |p|
         doc = Hpricot(open("http://www.hidemyass.com/proxy-list/#{p}"))
         (doc/"table#listtable/tr").each do |line|
           ip = (line/"td[2]").inner_text.gsub(/\n/,"")
@@ -32,10 +32,12 @@ module AnonymousProxymaster
         end
       end
 
-      @logger.info(':   ProxyServersList.get_proxy_list()') { "Get new #{@proxy_servers.length} proxies" }
+      @logger.info(':   ProxyList.get_proxy_list()') {
+        "Get new #{@proxy_servers.length} proxies" }
 
       rescue => e
-        @logger.error(':   ProxyServersList.get_proxy_list()') { "Error: #{e.class} - #{e.message}" }
+        @logger.error(':   ProxyList.get_proxy_list()') {
+          "Error: #{e.class} - #{e.message}" }
     end
 
     # ----------------------------------------------------------------------------
@@ -53,6 +55,8 @@ module AnonymousProxymaster
       # remove proxy from ok proxy server list
       elsif count > 10
         @proxy_servers = @proxy_servers - [proxy]
+        @logger.debug(':   ProxyList.bad_proxy()') {
+          "Remove proxy '#{proxy}' from proxy list" }
       else
         @bad_proxies[proxy] += 1
       end
@@ -62,9 +66,6 @@ module AnonymousProxymaster
         get_proxy_list
         @bad_proxies = {}
       end
-
-      @logger.debug(':   ProxyServersList.get_proxy_list()') {
-        "Bad (#{@bad_proxies.length}) and OK (#{@proxy_servers.length}) proxies count" }
 
     end
 
@@ -77,7 +78,7 @@ module AnonymousProxymaster
     end
 
     # ----------------------------------------------------------------------------
-    # Return first proxy from list
+    # Return first proxy from list (first of all rotate proxy list)
     #  - return nil if proxy servers list is empty
     # ----------------------------------------------------------------------------
 

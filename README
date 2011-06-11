@@ -1,13 +1,30 @@
-AnonymousProxymaster
-====================
+Anonymous Proxymaster
+=====================
 
-Introduction goes here.
+Simple script for anonymous proxy servers
 
 
 Example
 =======
 
-Example goes here.
+# Initialize
+p = AnonymousProxymaster::ProxyList.new
+
+# automatic rotate proxy list and get first proxy from array
+p.proxy
+=> '0.0.0.0:1234'
+
+# return proxy servers list in array
+p.proxy_servers
+=> ['0.0.0.0:1234', '0.0.0.0:1235', '0.0.0.0:1236']
+
+# add proxy to bad proxy servers list
+p.bad_proxy('0.0.0.0:1234')
+
+# rotate proxy list
+# for example: ['0.0.0.0:1234', '0.0.0.0:1235', '0.0.0.0:1236']
+p.rotate_list
+=> ['0.0.0.0:1235', '0.0.0.0:1236', '0.0.0.0:1234']
 
 
 Copyright (c) 2011 Marian Mrózek, released under the MIT license
