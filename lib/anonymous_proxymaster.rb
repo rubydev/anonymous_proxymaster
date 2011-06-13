@@ -12,18 +12,16 @@ module AnonymousProxymaster
 
       @proxy_servers = []
       @bad_proxies = {}
-      get_proxy_list
     end
 
     # ----------------------------------------------------------------------------
     # Get proxy list from www.hidemyass.com
     # ----------------------------------------------------------------------------
 
-    def get_proxy_list
+    def get_proxy_list(total_page_number = 25)
       @proxy_servers = []
 
-      # 30 is total page number
-      (1..30).each do |p|
+      (1..total_page_number).each do |p|
         doc = Hpricot(open("http://www.hidemyass.com/proxy-list/#{p}"))
         (doc/"table#listtable/tr").each do |line|
           ip = (line/"td[2]").inner_text.gsub(/\n/,"")
@@ -31,6 +29,8 @@ module AnonymousProxymaster
           @proxy_servers << "#{ip}:#{port}"
         end
       end
+
+      # remove bad proxies
 
       @logger.info(':   ProxyList.get_proxy_list()') {
         "Get new #{@proxy_servers.length} proxies" }
@@ -42,18 +42,23 @@ module AnonymousProxymaster
 
     # ----------------------------------------------------------------------------
     # Push proxy to bad proxy list
-    #  - if proxy 10x bad => remove from proxy servers list
-    #  - if proxy list count < 30 => get new proxy list
+    #  - if proxy 3x bad => remove from proxy servers list
+    #  - if proxy list count < 5 => get new proxy list
     # ----------------------------------------------------------------------------
 
-    def bad_proxy( proxy )
+    def bad_proxy( proxy, force_remove = false )
 
-      # add proxy to bad proxy list
       count = @bad_proxies[proxy]
-      if count.nil?
+
+      if force_remove
+        @proxy_servers = @proxy_servers - [proxy]
+        @logger.debug(':   ProxyList.bad_proxy()') {
+          "Force remove proxy '#{proxy}' from proxy list" }
+      # add proxy to bad proxy list
+      elsif count.nil?
         @bad_proxies[proxy] = 0
       # remove proxy from ok proxy server list
-      elsif count > 10
+      elsif count > 3
         @proxy_servers = @proxy_servers - [proxy]
         @logger.debug(':   ProxyList.bad_proxy()') {
           "Remove proxy '#{proxy}' from proxy list" }
@@ -62,7 +67,7 @@ module AnonymousProxymaster
       end
 
       # get new proxy list
-      if @proxy_servers.length < 30
+      if @proxy_servers.length < 5
         get_proxy_list
         @bad_proxies = {}
       end
@@ -93,6 +98,23 @@ module AnonymousProxymaster
 
     def rotate_list
        @proxy_servers.push @proxy_servers.shift
+    end
+
+    # ----------------------------------------------------------------------------
+    # Test proxy and remove bad proxies
+    # ----------------------------------------------------------------------------
+
+    def test_proxy
+       @proxy_servers.each do |proxy|
+         open("http://google.com/search?q=site:google.com", :proxy => "http://#{proxy}")
+
+         rescue Timeout::Error
+           @proxy_servers = @proxy_servers - [proxy]
+         rescue OpenURI::HTTPError
+           @proxy_servers = @proxy_servers - [proxy]
+         rescue
+           @proxy_servers = @proxy_servers - [proxy]
+       end
     end
 
   end
