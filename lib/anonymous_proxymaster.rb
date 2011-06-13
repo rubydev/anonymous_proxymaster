@@ -91,31 +91,39 @@ module AnonymousProxymaster
       @proxy_servers.length > 0 ? ( rotate_list; @proxy_servers.first ) : nil
     end
 
-
     # ----------------------------------------------------------------------------
     # Rotate proxy servers list
     # ----------------------------------------------------------------------------
 
     def rotate_list
-       @proxy_servers.push @proxy_servers.shift
+      @proxy_servers.push @proxy_servers.shift
     end
 
     # ----------------------------------------------------------------------------
-    # Test proxy and remove bad proxies
+    # Test all proxies and remove bad proxies
     # ----------------------------------------------------------------------------
 
-    def test_proxy
-       @proxy_servers.each do |proxy|
-         open("http://google.com/search?q=site:google.com", :proxy => "http://#{proxy}")
+    def test_proxies
+      @proxy_servers.each do |proxy|
+        test_proxy(proxy)
+      end
+    end
 
-         rescue Timeout::Error
-           @proxy_servers = @proxy_servers - [proxy]
-         rescue OpenURI::HTTPError
-           @proxy_servers = @proxy_servers - [proxy]
-         rescue
-           @proxy_servers = @proxy_servers - [proxy]
-       end
+    # ----------------------------------------------------------------------------
+    # Test proxy
+    # ----------------------------------------------------------------------------
+
+    def test_proxy(proxy)
+      open("http://google.com/search?q=site:google.com", :proxy => "http://#{proxy}")
+      rescue Timeout::Error
+        @proxy_servers = @proxy_servers - [proxy]
+      rescue OpenURI::HTTPError
+        @proxy_servers = @proxy_servers - [proxy]
+      rescue
+        @proxy_servers = @proxy_servers - [proxy]
     end
 
   end
 end
+
+
