@@ -18,19 +18,17 @@ module AnonymousProxymaster
     # Get proxy list from www.hidemyass.com
     # ----------------------------------------------------------------------------
 
-    def get_proxy_list(total_page_number = 25)
+    def get_proxy_list(total_page_number = 3)
       @proxy_servers = []
 
       (1..total_page_number).each do |p|
-        doc = Hpricot(open("http://www.hidemyass.com/proxy-list/#{p}"))
+        doc = Hpricot(open("http://www.hidemyass.com/proxy-list/search-249493/#{p}"))
         (doc/"table#listtable/tr").each do |line|
           ip = (line/"td[2]").inner_text.gsub(/\n/,"")
           port = (line/"td[3]").inner_text.gsub(/\n/,"")
           @proxy_servers << "#{ip}:#{port}"
         end
       end
-
-      # remove bad proxies
 
       @logger.info(':   ProxyList.get_proxy_list()') {
         "Get new #{@proxy_servers.length} proxies" }
@@ -104,9 +102,13 @@ module AnonymousProxymaster
     # ----------------------------------------------------------------------------
 
     def test_proxies
+      threads = []
       @proxy_servers.each do |proxy|
-        test_proxy(proxy)
+        threads << Thread.new {                                                            }
+          test_proxy(proxy)
+        }
       end
+      threads.each { |t| t.join}
     end
 
     # ----------------------------------------------------------------------------
