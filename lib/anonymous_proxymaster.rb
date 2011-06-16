@@ -104,7 +104,7 @@ module AnonymousProxymaster
     def test_proxies
       threads = []
       @proxy_servers.each do |proxy|
-        threads << Thread.new {                                                            }
+        threads << Thread.new {
           test_proxy(proxy)
         }
       end
