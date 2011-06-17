@@ -22,7 +22,7 @@ module AnonymousProxymaster
       @proxy_servers = []
 
       (1..total_page_number).each do |p|
-        doc = Hpricot(open("http://www.hidemyass.com/proxy-list/search-249493/#{p}"))
+        doc = Hpricot(open("http://www.hidemyass.com/proxy-list/#{p}"))
         (doc/"table#listtable/tr").each do |line|
           ip = (line/"td[2]").inner_text.gsub(/\n/,"")
           port = (line/"td[3]").inner_text.gsub(/\n/,"")
