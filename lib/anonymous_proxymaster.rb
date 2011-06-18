@@ -15,11 +15,72 @@ module AnonymousProxymaster
     end
 
     # ----------------------------------------------------------------------------
+    # Get proxy lists
+    # ----------------------------------------------------------------------------
+
+    def get_proxy_list
+      @proxy_servers = []
+
+      get_proxy_list_from_hidemyass_com
+      get_proxy_list_from_valid_proxy_com
+      get_proxy_list_from_textproxylists_com
+
+      @logger.info(':   ProxyList.get_proxy_list()') {
+        "Get new #{@proxy_servers.length} proxies" }
+
+      rescue => e
+        @logger.error(':   ProxyList.get_proxy_list()') {
+          "Error: #{e.class} - #{e.message}" }
+    end
+
+    # ----------------------------------------------------------------------------
+    # Get proxy list from textproxylists.com
+    # ----------------------------------------------------------------------------
+
+    def get_proxy_list_from_textproxylists_com
+
+      doc = open("http://www.textproxylists.com/proxy.php?allproxy").readlines
+      doc.each do |line|
+        @proxy_servers << "#{line.strip}" if line =~ /^\d+\.\d+\.\d+\.\d+:\d+$/
+      end
+
+      @logger.info(':   ProxyList.get_proxy_list_from_valid_proxy_com()') {
+        "Get new #{@proxy_servers.length} proxies" }
+
+      rescue => e
+        @logger.error(':   ProxyList.get_proxy_list_from_valid_proxy_com()') {
+          "Error: #{e.class} - #{e.message}" }
+    end
+
+    # ----------------------------------------------------------------------------
+    # Get proxy list from valid-proxy.com
+    # ----------------------------------------------------------------------------
+
+    def get_proxy_list_from_valid_proxy_com(total_page_number = 18)
+
+      (1..total_page_number).each do |p|
+        doc = Hpricot(open("http://valid-proxy.com/en/proxylist/country/asc/#{p}"))
+        (doc/"tr").each do |line|
+          ip = (line/"td[1]").inner_text.gsub(/\n/,"")
+          port = (line/"td[2]").inner_text.gsub(/\n/,"")
+          next if ip == "0.0.0.0" || ip == "127.0.0.1"
+          @proxy_servers << "#{ip}:#{port}"
+        end
+      end
+
+      @logger.info(':   ProxyList.get_proxy_list_from_valid_proxy_com()') {
+        "Get new #{@proxy_servers.length} proxies" }
+
+      rescue => e
+        @logger.error(':   ProxyList.get_proxy_list_from_valid_proxy_com()') {
+          "Error: #{e.class} - #{e.message}" }
+    end
+
+    # ----------------------------------------------------------------------------
     # Get proxy list from www.hidemyass.com
     # ----------------------------------------------------------------------------
 
-    def get_proxy_list(total_page_number = 3)
-      @proxy_servers = []
+    def get_proxy_list_from_hidemyass_com(total_page_number = 30)
 
       (1..total_page_number).each do |p|
         doc = Hpricot(open("http://www.hidemyass.com/proxy-list/#{p}"))
@@ -30,11 +91,11 @@ module AnonymousProxymaster
         end
       end
 
-      @logger.info(':   ProxyList.get_proxy_list()') {
+      @logger.info(':   ProxyList.get_proxy_list_from_hidemyass_com()') {
         "Get new #{@proxy_servers.length} proxies" }
 
       rescue => e
-        @logger.error(':   ProxyList.get_proxy_list()') {
+        @logger.error(':   ProxyList.get_proxy_list_from_hidemyass_com()') {
           "Error: #{e.class} - #{e.message}" }
     end
 
