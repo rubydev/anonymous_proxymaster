@@ -1,6 +1,5 @@
-source 'http://rubygems.org'
+source :rubygems
 
-gem 'logger'
-gem 'open-uri'
-gem 'hpricot
+# Specify your gem's dependencies in medusa-proxy-gem.gemspec
+gemspec
 
