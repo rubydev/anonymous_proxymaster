@@ -13,7 +13,10 @@ Gem::Specification.new do |s|
   s.add_dependency "bundler"
   s.add_dependency "hpricot"
 
-  s.files        = `git ls-files`.split("\n")
+  ignores = File.readlines(".gitignore").grep(/\S+/).map {|s| s.chomp }
+  dotfiles = [".gitignore"]
+
+  s.files = Dir["**/*"].reject {|f| File.directory?(f) || ignores.any? {|i| File.fnmatch(i, f) } } + dotfiles
   s.require_path = 'lib'
 end
 
