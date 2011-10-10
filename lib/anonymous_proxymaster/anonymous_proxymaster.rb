@@ -1,3 +1,4 @@
+# encoding: utf-8
 module AnonymousProxymaster
 
   class ProxyList
@@ -5,7 +6,6 @@ module AnonymousProxymaster
     PROXY_PLAIN_FILES = [
       'http://www.textproxylists.com/proxy.php?allproxy',
       'http://multiproxy.org/txt_all/proxy.txt',
-      # dead? 'http://tools.rosinstrument.com/cgi-bin/tl.pl',
       'http://www.textproxylists.com/proxy.php?anonymous',
       'http://www.freeproxy.ru/download/lists/goodproxy.txt',
       'http://www.tubeincreaser.com/proxylist.txt',
@@ -14,7 +14,17 @@ module AnonymousProxymaster
       'http://proxylists.net/http.txt',
       'http://wapland.org/proxy/proxy.txt',
       'http://www.rmccurdy.com/scripts/proxy/good.txt',
-      'http://www.freeproxy.ch/proxylight.txt'
+      'http://www.freeproxy.ch/proxylight.txt',
+      'http://www.greenforest.co.in/gb/proxy.txt',
+      'http://rmccurdy.com/scripts/proxy/good.txt',
+      'http://www.papilouve.com/divers/proxies2700.txt',
+      'http://more-proxies.com/Proxy.txt',
+      'http://more-proxies.com/Proxies.txt',
+      'http://more-proxies.com/xproxy.txt',
+      'http://reliableproxylist.com/leech/all.txt',
+      'http://www.angelfire.com/realm/frozenwater/proxies/proxies.txt',
+      'http://proxiak.pl/proxy_all.txt',
+      'http://computer-student.co.uk/proxy.txt'
     ]
 
     # ----------------------------------------------------------------------------
@@ -41,6 +51,7 @@ module AnonymousProxymaster
       get_proxy_list_from_cybersyndrome_net
       get_proxy_list_from_proxylist_sakura_ne_jp
       get_proxy_list_from_cz88_net
+      get_proxy_list_from_xroxy_com
 
       PROXY_PLAIN_FILES.each{|url| get_proxy_list_from_textproxylists url }
 
@@ -64,7 +75,8 @@ module AnonymousProxymaster
       counter = 0
       doc = open(url).readlines
       doc.each do |line|
-        @proxy_servers << "#{line.strip}" if line =~ /^\d+\.\d+\.\d+\.\d+:\d+$/
+        next unless line.strip =~ /^\d+\.\d+\.\d+\.\d+:\d+$/
+        @proxy_servers << "#{line.strip}"
         counter +=1
       end
 
@@ -74,6 +86,33 @@ module AnonymousProxymaster
       rescue => e
         @logger.error(':   ProxyList.get_proxy_list_from_textproxylists()') {
           "Error for url '#{url}': #{e.class} - #{e.message}" }
+    end
+
+    # ----------------------------------------------------------------------------
+    # Get proxy list from xroxy.com
+    # ----------------------------------------------------------------------------
+
+    def get_proxy_list_from_xroxy_com
+
+      counter = 0
+      (0..200).each do |p|
+        page = open("http://www.xroxy.com/proxylist.php?pnum=#{p}")
+        doc = Hpricot(page)
+        (doc/"div#content/table[1]/tr").each do |line|
+          ip = (line/"td[2]").inner_text.strip
+          port = (line/"td[3]").inner_text.strip
+          next unless port =~ /^\d+$/
+          @proxy_servers << "#{ip}:#{port}"
+          counter +=1
+        end
+      end
+
+      @logger.info(':   ProxyList.get_proxy_list_from_xroxy_com()') {
+        "Get new #{counter} proxies" }
+
+      rescue => e
+        @logger.error(':   ProxyList.get_proxy_list_from_xroxy_com()') {
+          "Error: #{e.class} - #{e.message}" }
     end
 
     # ----------------------------------------------------------------------------
@@ -89,11 +128,13 @@ module AnonymousProxymaster
       end
 
       links.each do |link|
-        doc = Hpricot(open(link))
+        page = open(link)
+        doc = Hpricot(page.read.encode('utf-8', 'gb18030'))
         (doc/"table/tr").each do |line|
-          ip = (line/"td[1]").inner_text.gsub(/\n/,"")
-          port = (line/"td[2]").inner_text.gsub(/\n/,"")
-          @proxy_servers << "#{ip}:#{port}" if port =~ /^\d+$/
+          ip = (line/"td[1]").inner_text.gsub(/\n/m,"").strip
+          port = (line/"td[2]").inner_text.gsub(/\n/m,"").strip
+          next unless port =~ /^\d+$/
+          @proxy_servers << "#{ip}:#{port}"
           counter +=1
         end
       end

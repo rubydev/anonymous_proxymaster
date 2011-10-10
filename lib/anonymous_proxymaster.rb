@@ -1,2 +1,4 @@
 require 'open-uri'
-require 'anonymous_proxymaster/anonymous_proxymaster.rb'
+require 'hpricot'
+require 'logger'
+require 'anonymous_proxymaster/anonymous_proxymaster'
