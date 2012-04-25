@@ -4,9 +4,7 @@ module AnonymousProxymaster
   class ProxyList
 
     PROXY_PLAIN_FILES = [
-      'http://www.textproxylists.com/proxy.php?allproxy',
       'http://multiproxy.org/txt_all/proxy.txt',
-      'http://www.textproxylists.com/proxy.php?anonymous',
       'http://www.freeproxy.ru/download/lists/goodproxy.txt',
       'http://www.tubeincreaser.com/proxylist.txt',
       'http://hack72.2ch.net/otakara.cgi',
@@ -21,7 +19,6 @@ module AnonymousProxymaster
       'http://more-proxies.com/Proxy.txt',
       'http://more-proxies.com/Proxies.txt',
       'http://more-proxies.com/xproxy.txt',
-      'http://reliableproxylist.com/leech/all.txt',
       'http://www.angelfire.com/realm/frozenwater/proxies/proxies.txt',
       'http://proxiak.pl/proxy_all.txt',
       'http://computer-student.co.uk/proxy.txt'
@@ -202,7 +199,6 @@ module AnonymousProxymaster
         'http://www.cybersyndrome.net/plr5.html',
         'http://www.cybersyndrome.net/pla5.html',
         'http://www.cybersyndrome.net/pld5.html',
-        'http://www.cybersyndrome.net/pls5.html'
       ]
 
       links.each do |link|
@@ -257,7 +253,10 @@ module AnonymousProxymaster
       (1..total_page_number).each do |p|
         doc = Hpricot(open("http://www.hidemyass.com/proxy-list/#{p}"))
         (doc/"table#listtable/tr").each do |line|
-          ip = (line/"td[2]").inner_text.gsub(/\n/,"")
+          ip = (line/"td[2]").html.gsub(/\n/,"") \
+            .gsub(/<span style="display:none">\d+<\/span>/i,'') \
+            .gsub(/<div style="display:none">\d+<\/div>/i,'') \
+            .gsub(/class="\d+"/i,'').gsub(/[^\d\.]/,'')
           port = (line/"td[3]").inner_text.gsub(/\n/,"")
           @proxy_servers << "#{ip}:#{port}"
           counter +=1
