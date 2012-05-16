@@ -10,7 +10,6 @@ module AnonymousProxymaster
       'http://hack72.2ch.net/otakara.cgi',
       'http://proxylists.net/http_highanon.txt',
       'http://proxylists.net/http.txt',
-      'http://wapland.org/proxy/proxy.txt',
       'http://www.rmccurdy.com/scripts/proxy/good.txt',
       'http://www.freeproxy.ch/proxylight.txt',
       'http://www.greenforest.co.in/gb/proxy.txt',
@@ -21,7 +20,29 @@ module AnonymousProxymaster
       'http://more-proxies.com/xproxy.txt',
       'http://www.angelfire.com/realm/frozenwater/proxies/proxies.txt',
       'http://proxiak.pl/proxy_all.txt',
-      'http://computer-student.co.uk/proxy.txt'
+      'http://computer-student.co.uk/proxy.txt',
+      'http://vavricek.cs.vsb.cz/images/2/21/Proxy-list-POST-tested.txt',
+      'http://www.searchlores.org/pxylist1.txt',
+      'http://www.searchlores.org/pxylist2.txt',
+      'http://www.tubeincreaser.com/proxylist.txt',
+      'http://org.pc-freak.net/projects/anonproxys.txt',
+      'http://www.papilouve.com/divers/proxies2700.txt',
+      'http://www.airdemon.net/proxylist.txt',
+      'http://rmccurdy.com/scripts/proxy/good.txt',
+      'http://noseliteteam.net/_fr/1/anonymous.txt',
+      'http://173.212.200.42/xr7/s1.txt',
+      'http://173.212.200.42/xr7/s2.txt',
+      'http://173.212.200.42/xr7/s3.txt',
+      'http://173.212.200.42/xr7/s4.txt',
+      'http://173.212.200.42/xr7/s5.txt',
+      'http://173.212.200.42/xr7/s6.txt',
+      'http://173.212.200.42/xr7/s7.txt',
+      'http://173.212.200.42/xr7/s8.txt',
+      'http://starskingvn.com/Proxies.txt',
+      'ftp://89.105.158.144/Soft/Programm%20for%20TC7/KeyChecker/proxy.txt',
+      'http://proxifier.at.ua/HttpsSocksv5-14-ordibehesht-.txt',
+      'http://www.jhaazhum.com/wp-content/uploads/2012/04/proxy.txt',
+      'http://file.oboz.ua/files/vf4f630068113d0_2012316105712.txt'
     ]
 
     # ----------------------------------------------------------------------------
@@ -46,7 +67,6 @@ module AnonymousProxymaster
       get_proxy_list_from_hidemyass_com
       get_proxy_list_from_valid_proxy_com
       get_proxy_list_from_cybersyndrome_net
-      get_proxy_list_from_proxylist_sakura_ne_jp
       get_proxy_list_from_cz88_net
       get_proxy_list_from_xroxy_com
 
@@ -72,8 +92,8 @@ module AnonymousProxymaster
       counter = 0
       doc = open(url).readlines
       doc.each do |line|
-        next unless line.strip =~ /^\d+\.\d+\.\d+\.\d+:\d+$/
-        @proxy_servers << "#{line.strip}"
+        next unless ip = line.strip.match(/(\d+\.\d+\.\d+\.\d+:\d+)/)
+        @proxy_servers << ip[1]
         counter +=1
       end
 
@@ -92,7 +112,7 @@ module AnonymousProxymaster
     def get_proxy_list_from_xroxy_com
 
       counter = 0
-      (0..200).each do |p|
+      (0..150).each do |p|
         page = open("http://www.xroxy.com/proxylist.php?pnum=#{p}")
         doc = Hpricot(page)
         (doc/"div#content/table[1]/tr").each do |line|
@@ -144,49 +164,6 @@ module AnonymousProxymaster
           "Error: #{e.class} - #{e.message}" }
     end
 
-
-    # ----------------------------------------------------------------------------
-    # Get proxy list from proxylist.sakura.ne.jp
-    # ----------------------------------------------------------------------------
-
-    def get_proxy_list_from_proxylist_sakura_ne_jp
-
-      doc = Hpricot(open("http://proxylist.sakura.ne.jp/index.htm?pages=#{p}"))
-      total_pages = (doc/"div.pages/a:last").inner_text.gsub(/\D/,"")
-      total_pages = 10 if total_pages !~ /^\d+$/ # default is 10 total pages
-
-      counter = 0
-      (0..total_pages.to_i).each do |p|
-        doc = open("http://proxylist.sakura.ne.jp/index.htm?pages=#{p}").read
-
-        proxies = doc.scan(/proxy\(\d+,'\d+','\d+','\d+','\d+',\d+\)/)
-        proxies.each { |proxy_code|
-          if proxy_code =~ /proxy\((\d+),'(\d+)','(\d+)','(\d+)','(\d+)',(\d+)\)/
-            mode = $1.to_i; arg1 = $2; arg2 = $3; arg3 = $4; arg4 = $5; port = $6
-
-            case mode
-            when 1
-              proxy = "#{arg1}.#{arg2}.#{arg3}.#{arg4}:#{port}"
-            when 2
-              proxy = "#{arg4}.#{arg1}.#{arg2}.#{arg3}:#{port}"
-            when 3
-              proxy = "#{arg3}.#{arg4}.#{arg1}.#{arg2}:#{port}"
-            when 4
-              proxy = "#{arg2}.#{arg3}.#{arg4}.#{arg1}:#{port}"
-            end
-            @proxy_servers << proxy
-            counter +=1
-          end
-        }
-      end
-
-      @logger.info(':   ProxyList.get_proxy_list_from_proxylist_sakura_ne_jp()') {
-        "Get new #{counter} proxies" }
-
-      rescue => e
-        @logger.error(':   ProxyList.get_proxy_list_from_proxylist_sakura_ne_jp') {
-          "Error: #{e.class} - #{e.message}" }
-    end
 
     # ----------------------------------------------------------------------------
     # Get proxy list from cybersyndrome.net
